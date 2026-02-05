@@ -233,6 +233,60 @@ describe("getApiKeyForModel", () => {
     }
   });
 
+  it("resolves OPENROUTER_API_KEY when OpenRouter routing is enabled", async () => {
+    const previousKey = process.env.OPENROUTER_API_KEY;
+
+    try {
+      process.env.OPENROUTER_API_KEY = "sk-or-v1-test-key";
+
+      vi.resetModules();
+      const { resolveApiKeyForProvider } = await import("./model-auth.js");
+
+      const resolved = await resolveApiKeyForProvider({
+        provider: "anthropic",
+        store: { version: 1, profiles: {} },
+      });
+      expect(resolved.apiKey).toBe("sk-or-v1-test-key");
+      expect(resolved.source).toContain("OPENROUTER_API_KEY");
+      expect(resolved.mode).toBe("api-key");
+    } finally {
+      if (previousKey === undefined) {
+        delete process.env.OPENROUTER_API_KEY;
+      } else {
+        process.env.OPENROUTER_API_KEY = previousKey;
+      }
+    }
+  });
+
+  it("short-circuits to OPENROUTER_API_KEY regardless of requested provider", async () => {
+    const previousKey = process.env.OPENROUTER_API_KEY;
+
+    try {
+      process.env.OPENROUTER_API_KEY = "sk-or-v1-universal";
+
+      vi.resetModules();
+      const { resolveApiKeyForProvider } = await import("./model-auth.js");
+
+      const resolvedOpenai = await resolveApiKeyForProvider({
+        provider: "openai",
+        store: { version: 1, profiles: {} },
+      });
+      expect(resolvedOpenai.apiKey).toBe("sk-or-v1-universal");
+
+      const resolvedGoogle = await resolveApiKeyForProvider({
+        provider: "google",
+        store: { version: 1, profiles: {} },
+      });
+      expect(resolvedGoogle.apiKey).toBe("sk-or-v1-universal");
+    } finally {
+      if (previousKey === undefined) {
+        delete process.env.OPENROUTER_API_KEY;
+      } else {
+        process.env.OPENROUTER_API_KEY = previousKey;
+      }
+    }
+  });
+
   it("resolves Synthetic API key from env", async () => {
     const previousSynthetic = process.env.SYNTHETIC_API_KEY;
 

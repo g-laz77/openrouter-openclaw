@@ -13,6 +13,7 @@ import {
   resolveAuthStorePathForDisplay,
 } from "./auth-profiles.js";
 import { normalizeProviderId } from "./model-selection.js";
+import { getOpenRouterApiKey, isOpenRouterEnabled } from "./openrouter-routing.js";
 
 export { ensureAuthProfileStore, resolveAuthProfileOrder } from "./auth-profiles.js";
 
@@ -139,6 +140,14 @@ export async function resolveApiKeyForProvider(params: {
 }): Promise<ResolvedProviderAuth> {
   const { provider, cfg, profileId, preferredProfile } = params;
   const store = params.store ?? ensureAuthProfileStore(params.agentDir);
+
+  if (isOpenRouterEnabled()) {
+    const orKey = getOpenRouterApiKey();
+    if (orKey) {
+      return { apiKey: orKey, source: "env: OPENROUTER_API_KEY", mode: "api-key" };
+    }
+    throw new Error("OPENROUTER_API_KEY not set but OpenRouter routing is enabled.");
+  }
 
   if (profileId) {
     const resolved = await resolveApiKeyForProfile({

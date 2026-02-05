@@ -9,16 +9,18 @@ describe("applyModelDefaults", () => {
       agents: {
         defaults: {
           models: {
-            "anthropic/claude-opus-4-6": {},
-            "openai/gpt-5.2": {},
+            "openrouter/anthropic/claude-opus-4-6": {},
+            "openrouter/openai/gpt-5.2": {},
           },
         },
       },
     } satisfies OpenClawConfig;
     const next = applyModelDefaults(cfg);
 
-    expect(next.agents?.defaults?.models?.["anthropic/claude-opus-4-6"]?.alias).toBe("opus");
-    expect(next.agents?.defaults?.models?.["openai/gpt-5.2"]?.alias).toBe("gpt");
+    expect(next.agents?.defaults?.models?.["openrouter/anthropic/claude-opus-4-6"]?.alias).toBe(
+      "opus",
+    );
+    expect(next.agents?.defaults?.models?.["openrouter/openai/gpt-5.2"]?.alias).toBe("gpt");
   });
 
   it("does not override existing aliases", () => {
@@ -26,7 +28,7 @@ describe("applyModelDefaults", () => {
       agents: {
         defaults: {
           models: {
-            "anthropic/claude-opus-4-6": { alias: "Opus" },
+            "openrouter/anthropic/claude-opus-4-6": { alias: "Opus" },
           },
         },
       },
@@ -34,7 +36,9 @@ describe("applyModelDefaults", () => {
 
     const next = applyModelDefaults(cfg);
 
-    expect(next.agents?.defaults?.models?.["anthropic/claude-opus-4-6"]?.alias).toBe("Opus");
+    expect(
+      next.agents?.defaults?.models?.["openrouter/anthropic/claude-opus-4-6"]?.alias,
+    ).toBe("Opus");
   });
 
   it("respects explicit empty alias disables", () => {
@@ -42,8 +46,8 @@ describe("applyModelDefaults", () => {
       agents: {
         defaults: {
           models: {
-            "google/gemini-3-pro-preview": { alias: "" },
-            "google/gemini-3-flash-preview": {},
+            "openrouter/google/gemini-3-pro-preview": { alias: "" },
+            "openrouter/google/gemini-3-flash-preview": {},
           },
         },
       },
@@ -51,10 +55,12 @@ describe("applyModelDefaults", () => {
 
     const next = applyModelDefaults(cfg);
 
-    expect(next.agents?.defaults?.models?.["google/gemini-3-pro-preview"]?.alias).toBe("");
-    expect(next.agents?.defaults?.models?.["google/gemini-3-flash-preview"]?.alias).toBe(
-      "gemini-flash",
-    );
+    expect(
+      next.agents?.defaults?.models?.["openrouter/google/gemini-3-pro-preview"]?.alias,
+    ).toBe("");
+    expect(
+      next.agents?.defaults?.models?.["openrouter/google/gemini-3-flash-preview"]?.alias,
+    ).toBe("gemini-flash");
   });
 
   it("fills missing model provider defaults", () => {

@@ -5,6 +5,7 @@ import { resolveOpenClawAgentDir } from "../agent-paths.js";
 import { DEFAULT_CONTEXT_TOKENS } from "../defaults.js";
 import { normalizeModelCompat } from "../model-compat.js";
 import { normalizeProviderId } from "../model-selection.js";
+import { createOpenRouterModel, isOpenRouterEnabled } from "../openrouter-routing.js";
 import {
   discoverAuthStorage,
   discoverModels,
@@ -79,8 +80,9 @@ export function resolveModel(
     );
     if (inlineMatch) {
       const normalized = normalizeModelCompat(inlineMatch as Model<Api>);
+      const result = isOpenRouterEnabled() ? createOpenRouterModel(normalized) : normalized;
       return {
-        model: normalized,
+        model: result,
         authStorage,
         modelRegistry,
       };
@@ -99,7 +101,8 @@ export function resolveModel(
         contextWindow: providerCfg?.models?.[0]?.contextWindow ?? DEFAULT_CONTEXT_TOKENS,
         maxTokens: providerCfg?.models?.[0]?.maxTokens ?? DEFAULT_CONTEXT_TOKENS,
       } as Model<Api>);
-      return { model: fallbackModel, authStorage, modelRegistry };
+      const result = isOpenRouterEnabled() ? createOpenRouterModel(fallbackModel) : fallbackModel;
+      return { model: result, authStorage, modelRegistry };
     }
     return {
       error: `Unknown model: ${provider}/${modelId}`,
@@ -107,5 +110,9 @@ export function resolveModel(
       modelRegistry,
     };
   }
-  return { model: normalizeModelCompat(model), authStorage, modelRegistry };
+  const resolved = normalizeModelCompat(model);
+  if (isOpenRouterEnabled()) {
+    return { model: createOpenRouterModel(resolved), authStorage, modelRegistry };
+  }
+  return { model: resolved, authStorage, modelRegistry };
 }

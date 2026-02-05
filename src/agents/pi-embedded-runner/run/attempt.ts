@@ -29,6 +29,7 @@ import {
 } from "../../channel-tools.js";
 import { resolveOpenClawDocsPath } from "../../docs-path.js";
 import { isTimeoutError } from "../../failover-error.js";
+import { createOpenRouterStreamFn, getOpenRouterApiKey, isOpenRouterEnabled } from "../../openrouter-routing.js";
 import { resolveModelAuthMode } from "../../model-auth.js";
 import { resolveDefaultModelForAgent } from "../../model-selection.js";
 import {
@@ -514,6 +515,13 @@ export async function runEmbeddedAttempt(
 
       // Force a stable streamFn reference so vitest can reliably mock @mariozechner/pi-ai.
       activeSession.agent.streamFn = streamSimple;
+
+      if (isOpenRouterEnabled()) {
+        const orApiKey = getOpenRouterApiKey();
+        if (orApiKey) {
+          activeSession.agent.streamFn = createOpenRouterStreamFn(orApiKey);
+        }
+      }
 
       applyExtraParamsToAgent(
         activeSession.agent,

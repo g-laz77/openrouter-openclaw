@@ -2,6 +2,7 @@ import { classifyFailoverReason, type FailoverReason } from "./pi-embedded-helpe
 
 const TIMEOUT_HINT_RE = /timeout|timed out|deadline exceeded|context deadline exceeded/i;
 const ABORT_TIMEOUT_RE = /request was aborted|request aborted/i;
+const OPENROUTER_BILLING_RE = /insufficient credits|payment required|quota exceeded/i;
 
 export class FailoverError extends Error {
   readonly reason: FailoverReason;
@@ -142,9 +143,23 @@ export function isTimeoutError(err: unknown): boolean {
   return hasTimeoutHint(cause) || hasTimeoutHint(reason);
 }
 
+function parseOpenRouterError(err: unknown): FailoverReason | null {
+  const status = getStatusCode(err);
+  const message = getErrorMessage(err);
+  if (status === 402 || (message && OPENROUTER_BILLING_RE.test(message))) {
+    return "billing";
+  }
+  return null;
+}
+
 export function resolveFailoverReasonFromError(err: unknown): FailoverReason | null {
   if (isFailoverError(err)) {
     return err.reason;
+  }
+
+  const openRouterReason = parseOpenRouterError(err);
+  if (openRouterReason) {
+    return openRouterReason;
   }
 
   const status = getStatusCode(err);

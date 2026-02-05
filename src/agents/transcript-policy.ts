@@ -1,5 +1,6 @@
 import type { ToolCallIdMode } from "./tool-call-id.js";
 import { normalizeProviderId } from "./model-selection.js";
+import { isOpenRouterEnabled, resolveRealProviderFromOpenRouter } from "./openrouter-routing.js";
 import { isAntigravityClaude, isGoogleModelApi } from "./pi-embedded-helpers/google.js";
 
 export type TranscriptSanitizeMode = "full" | "images-only";
@@ -78,7 +79,11 @@ export function resolveTranscriptPolicy(params: {
   provider?: string | null;
   modelId?: string | null;
 }): TranscriptPolicy {
-  const provider = normalizeProviderId(params.provider ?? "");
+  const rawProvider = normalizeProviderId(params.provider ?? "");
+  const provider =
+    isOpenRouterEnabled() && rawProvider === "openrouter"
+      ? normalizeProviderId(resolveRealProviderFromOpenRouter(rawProvider, params.modelId))
+      : rawProvider;
   const modelId = params.modelId ?? "";
   const isGoogle = isGoogleModelApi(params.modelApi);
   const isAnthropic = isAnthropicApi(params.modelApi, provider);

@@ -2,6 +2,7 @@ import type { StreamFn } from "@mariozechner/pi-agent-core";
 import type { SimpleStreamOptions } from "@mariozechner/pi-ai";
 import { streamSimple } from "@mariozechner/pi-ai";
 import type { OpenClawConfig } from "../../config/config.js";
+import { isOpenRouterEnabled } from "../openrouter-routing.js";
 import { log } from "./logger.js";
 
 const OPENROUTER_APP_HEADERS: Record<string, string> = {
@@ -111,8 +112,8 @@ function createOpenRouterHeadersWrapper(baseStreamFn: StreamFn | undefined): Str
     underlying(model, context, {
       ...options,
       headers: {
-        ...OPENROUTER_APP_HEADERS,
         ...options?.headers,
+        ...OPENROUTER_APP_HEADERS,
       },
     });
 }
@@ -149,7 +150,7 @@ export function applyExtraParamsToAgent(
     agent.streamFn = wrappedStreamFn;
   }
 
-  if (provider === "openrouter") {
+  if (provider === "openrouter" || isOpenRouterEnabled()) {
     log.debug(`applying OpenRouter app attribution headers for ${provider}/${modelId}`);
     agent.streamFn = createOpenRouterHeadersWrapper(agent.streamFn);
   }

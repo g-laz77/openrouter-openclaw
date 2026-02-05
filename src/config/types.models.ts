@@ -52,8 +52,14 @@ export type BedrockDiscoveryConfig = {
   defaultMaxTokens?: number;
 };
 
+export type OpenRouterRoutingConfig = {
+  enabled: boolean;
+  fallbackToNative?: boolean;
+};
+
 export type ModelsConfig = {
   mode?: "merge" | "replace";
   providers?: Record<string, ModelProviderConfig>;
   bedrockDiscovery?: BedrockDiscoveryConfig;
+  openRouterRouting?: OpenRouterRoutingConfig;
 };

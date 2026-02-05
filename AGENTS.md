@@ -184,3 +184,35 @@
 - Publish: `npm publish --access public --otp="<otp>"` (run from the package dir).
 - Verify without local npmrc side effects: `npm view <pkg> version --userconfig "$(mktemp)"`.
 - Kill the tmux session after publish.
+
+---
+
+## OpenRouter Integration (Local Fork - 2026-02)
+
+### Architecture Summary
+This fork replaces Anthropic direct API calls with OpenRouter. The integration wraps `streamSimple()` from `pi-ai` rather than replacing it:
+1. Model `api` changed from `"anthropic-messages"` to `"openai-completions"` (OpenAI-compatible)
+2. `baseUrl` set to `https://openrouter.ai/api/v1`
+3. Model IDs mapped to OpenRouter format: `anthropic/claude-opus-4-6`
+4. Auth/attribution headers injected via stream wrapper
+
+### Key Files Added
+| File | Purpose |
+|------|---------|
+| `src/agents/openrouter-routing.ts` | Core routing: `mapToOpenRouterModelId()`, `createOpenRouterModel()`, `isOpenRouterEnabled()` |
+| `src/agents/openrouter-routing.test.ts` | 25 unit tests |
+| `src/agents/openrouter-routing.live.test.ts` | 3 live integration tests |
+| `src/infra/provider-usage.fetch.openrouter.ts` | Usage fetcher via `GET /api/v1/auth/key` |
+
+### Activation
+Set `OPENROUTER_API_KEY` env var -- routing is auto-enabled when present. No config file changes needed.
+
+### Security Notes
+- **Header precedence**: Hardcoded auth headers spread LAST to prevent caller override
+- Base URL hardcoded to `https://openrouter.ai/api/v1` (not configurable, prevents SSRF)
+- API key only sent to the hardcoded OpenRouter endpoint
+
+### Known Limitations
+- Anthropic prompt caching (`cacheRetention`) does NOT translate through OpenRouter
+- Pre-existing test timeouts (node-llama-cpp + Rosetta) are environmental, not caused by changes
+- `npm install --ignore-scripts` needed on Apple Silicon if node-llama-cpp postinstall fails
