@@ -3,24 +3,26 @@ import type { OpenClawConfig } from "./types.js";
 import { DEFAULT_CONTEXT_TOKENS } from "../agents/defaults.js";
 import { applyModelDefaults } from "./defaults.js";
 
+// Note: DEFAULT_MODEL_ALIASES prefix is evaluated at module load time based on
+// isOpenRouterEnabled(). In tests, OPENROUTER_API_KEY is unset, so aliases
+// resolve without the "openrouter/" prefix (native provider path).
+
 describe("applyModelDefaults", () => {
   it("adds default aliases when models are present", () => {
     const cfg = {
       agents: {
         defaults: {
           models: {
-            "openrouter/anthropic/claude-opus-4-6": {},
-            "openrouter/openai/gpt-5.2": {},
+            "anthropic/claude-opus-4-6": {},
+            "openai/gpt-5.2": {},
           },
         },
       },
     } satisfies OpenClawConfig;
     const next = applyModelDefaults(cfg);
 
-    expect(next.agents?.defaults?.models?.["openrouter/anthropic/claude-opus-4-6"]?.alias).toBe(
-      "opus",
-    );
-    expect(next.agents?.defaults?.models?.["openrouter/openai/gpt-5.2"]?.alias).toBe("gpt");
+    expect(next.agents?.defaults?.models?.["anthropic/claude-opus-4-6"]?.alias).toBe("opus");
+    expect(next.agents?.defaults?.models?.["openai/gpt-5.2"]?.alias).toBe("gpt");
   });
 
   it("does not override existing aliases", () => {
@@ -28,7 +30,7 @@ describe("applyModelDefaults", () => {
       agents: {
         defaults: {
           models: {
-            "openrouter/anthropic/claude-opus-4-6": { alias: "Opus" },
+            "anthropic/claude-opus-4-6": { alias: "Opus" },
           },
         },
       },
@@ -36,9 +38,7 @@ describe("applyModelDefaults", () => {
 
     const next = applyModelDefaults(cfg);
 
-    expect(
-      next.agents?.defaults?.models?.["openrouter/anthropic/claude-opus-4-6"]?.alias,
-    ).toBe("Opus");
+    expect(next.agents?.defaults?.models?.["anthropic/claude-opus-4-6"]?.alias).toBe("Opus");
   });
 
   it("respects explicit empty alias disables", () => {
@@ -46,8 +46,8 @@ describe("applyModelDefaults", () => {
       agents: {
         defaults: {
           models: {
-            "openrouter/google/gemini-3-pro-preview": { alias: "" },
-            "openrouter/google/gemini-3-flash-preview": {},
+            "google/gemini-3-pro-preview": { alias: "" },
+            "google/gemini-3-flash-preview": {},
           },
         },
       },
@@ -55,12 +55,10 @@ describe("applyModelDefaults", () => {
 
     const next = applyModelDefaults(cfg);
 
-    expect(
-      next.agents?.defaults?.models?.["openrouter/google/gemini-3-pro-preview"]?.alias,
-    ).toBe("");
-    expect(
-      next.agents?.defaults?.models?.["openrouter/google/gemini-3-flash-preview"]?.alias,
-    ).toBe("gemini-flash");
+    expect(next.agents?.defaults?.models?.["google/gemini-3-pro-preview"]?.alias).toBe("");
+    expect(next.agents?.defaults?.models?.["google/gemini-3-flash-preview"]?.alias).toBe(
+      "gemini-flash",
+    );
   });
 
   it("fills missing model provider defaults", () => {

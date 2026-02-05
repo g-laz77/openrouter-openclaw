@@ -2,6 +2,7 @@ import type { OpenClawConfig } from "./types.js";
 import type { ModelDefinitionConfig } from "./types.models.js";
 import { DEFAULT_CONTEXT_TOKENS } from "../agents/defaults.js";
 import { parseModelRef } from "../agents/model-selection.js";
+import { isOpenRouterEnabled } from "../agents/openrouter-routing.js";
 import { DEFAULT_AGENT_MAX_CONCURRENT, DEFAULT_SUBAGENT_MAX_CONCURRENT } from "./agent-limits.js";
 import { resolveTalkApiKey } from "./talk.js";
 
@@ -11,18 +12,17 @@ let defaultWarnState: WarnState = { warned: false };
 
 type AnthropicAuthDefaultsMode = "api_key" | "oauth";
 
+const _or = isOpenRouterEnabled() ? "openrouter/" : "";
+
 const DEFAULT_MODEL_ALIASES: Readonly<Record<string, string>> = {
-  // OpenRouter-routed Anthropic models
-  opus: "openrouter/anthropic/claude-opus-4-6",
-  sonnet: "openrouter/anthropic/claude-sonnet-4-5",
+  opus: `${_or}anthropic/claude-opus-4-6`,
+  sonnet: `${_or}anthropic/claude-sonnet-4-5`,
 
-  // OpenRouter-routed OpenAI models
-  gpt: "openrouter/openai/gpt-5.2",
-  "gpt-mini": "openrouter/openai/gpt-5-mini",
+  gpt: `${_or}openai/gpt-5.2`,
+  "gpt-mini": `${_or}openai/gpt-5-mini`,
 
-  // OpenRouter-routed Google Gemini models
-  gemini: "openrouter/google/gemini-3-pro-preview",
-  "gemini-flash": "openrouter/google/gemini-3-flash-preview",
+  gemini: `${_or}google/gemini-3-pro-preview`,
+  "gemini-flash": `${_or}google/gemini-3-flash-preview`,
 };
 
 const DEFAULT_MODEL_COST: ModelDefinitionConfig["cost"] = {
